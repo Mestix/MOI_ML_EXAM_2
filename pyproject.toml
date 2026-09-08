@@ -1,0 +1,59 @@
+[project]
+name = "MADS-exam-25"
+version = "0.1.0"
+description = "Code for MADS deep learning exam"
+authors = [
+    {name = "Melissa Landwerd"},
+]
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+    "matplotlib>=3.9",
+    "pyarrow>=17",
+    "ray[tune]>=2.40",
+    "seaborn>=0.13.1",
+    "torch-tb-profiler>=0.4.3",
+    "tensorboard>=2.16.2",
+    "mlflow>=2.13.2",
+    "torch>=2.5.1",
+    "mltrainer>=0.2.5",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[dependency-groups]
+dev = [
+    "isort>=5.13.2",
+    "jupyter>=1.1.1",
+    "mypy>=1.14.1",
+    "pyright>=1.1.391",
+    "ruff>=0.9.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_configs = true
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
