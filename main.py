@@ -140,6 +140,7 @@ def run_standard_experiment(args: Namespace) -> None:
         class_weights=weighted,
         parallel=parallel,
         epochs=args.epochs,
+        evaluate_on_test=args.test_evaluation,
         learning_rate=args.learning_rate,
         weight_decay=args.weight_decay,
         filename=RESULTS_FILE,
@@ -274,6 +275,11 @@ def parse_args() -> Namespace:
     parser.add_argument("--dropout", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--num-samples", type=int, default=20)
+    parser.add_argument(
+        "--test-evaluation",
+        action="store_true",
+        help="Evaluate a standard experiment once on the test set.",
+    )
 
     return parser.parse_args()
 

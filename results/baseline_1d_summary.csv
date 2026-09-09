@@ -1,0 +1,2 @@
+Experiment,Runs,Accuracy Mean,Macro Recall Mean,Recall_N Mean,Recall_S Mean,Recall_V Mean,Recall_F Mean,Recall_Q Mean,Training Time Seconds Mean
+baseline_1d,1,0.9650505396607847,0.7810278939087046,0.990892783220643,0.5887640449438202,0.8549222797927462,0.5234375,0.9471228615863142,84.92751772999873

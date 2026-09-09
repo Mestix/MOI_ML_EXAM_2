@@ -105,12 +105,12 @@ def run_experiment(
 
     save_result(result, filename)
     plot_confusion_matrix(
-        [confusion_matrix(
+        confusion_matrix(
             y_true,
             y_pred,
             labels=range(5),
             normalize="true",
-        )],
+        ),
         experiment_name,
     )
 
@@ -206,19 +206,17 @@ def save_summary(
 
 
 def plot_confusion_matrix(
-    confusion_matrices: list[np.ndarray],
+    matrix: np.ndarray,
     experiment_name: str,
 ) -> None:
     """Maakt de confusion matrix van het experiment."""
-
-    mean_cm = np.mean(confusion_matrices, axis=0)
 
     Path("figures").mkdir(exist_ok=True)
 
     plt.figure(figsize=(6, 5))
 
     sns.heatmap(
-        mean_cm,
+        matrix,
         annot=True,
         fmt=".3f",
         cmap="Blues",
@@ -230,11 +228,11 @@ def plot_confusion_matrix(
 
     plt.xlabel("Voorspelde klasse")
     plt.ylabel("Werkelijke klasse")
-    plt.title(f"Gemiddelde confusion matrix – {experiment_name}")
+    plt.title(f"Confusion matrix – {experiment_name}")
     plt.tight_layout()
 
     plt.savefig(
-        f"figures/{safe_name(experiment_name)}_mean_confusion_matrix.png",
+        f"figures/{safe_name(experiment_name)}_confusion_matrix.png",
         dpi=300,
     )
 

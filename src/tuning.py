@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 from ray import tune
@@ -162,9 +163,46 @@ def run_ray_tuning(
         ascending=False,
     )
 
-    # Sla de tuningresultaten op zodat ze later bekeken kunnen worden
-    # zonder alle experimenten opnieuw uit te voeren.
+    # Sla de tuningresultaten op zodat ze later bekeken kunnen worden.
     Path("results").mkdir(parents=True, exist_ok=True)
     result_df.to_csv(TUNING_RESULTS_FILE, index=False)
+    save_tuning_outputs(result_df)
 
     return result_df
+
+
+def save_tuning_outputs(result_df: pd.DataFrame) -> None:
+    """Slaat een samenvatting en figuur van de validatieresultaten op."""
+
+    best = result_df.iloc[0]
+    summary = pd.DataFrame([{
+        "Trial": best["trial_id"],
+        "Epoch": best["epoch"],
+        "Validation Accuracy": best["accuracy"],
+        "Validation Macro Recall": best["macro_recall"],
+        "Recall N": best["recall_N"],
+        "Recall S": best["recall_S"],
+        "Recall V": best["recall_V"],
+        "Recall F": best["recall_F"],
+        "Recall Q": best["recall_Q"],
+        "Learning Rate": best["config/learning_rate"],
+        "Filters": best["config/filters"],
+        "Batch Size": best["config/batch_size"],
+        "Weight Decay": best["config/weight_decay"],
+        "Dropout": best["config/dropout"],
+        "Large Kernel": best["config/large_kernel"],
+    }])
+    Path("results").mkdir(parents=True, exist_ok=True)
+    summary.to_csv("results/ray_tuning_summary.csv", index=False)
+
+    figure_data = result_df.sort_values("macro_recall")
+    Path("figures").mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(8, 5))
+    plt.barh(figure_data["trial_id"], figure_data["macro_recall"])
+    plt.xlabel("Validatie macro-recall")
+    plt.ylabel("Trial")
+    plt.title("Ray Tune: macro-recall per configuratie")
+    plt.xlim(0, 1)
+    plt.tight_layout()
+    plt.savefig("figures/ray_tuning_top_trials.png", dpi=300)
+    plt.close()

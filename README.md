@@ -4,7 +4,7 @@
 **Studentnummer:** 1878919  
 **Cursus:** Machine Learning 2025
 
-Dit project onderzoekt hoe verschillende CNN-keuzes de classificatie van ECG-hartslagen uit de MIT-BIH Arrhythmia Dataset beïnvloeden. De nadruk ligt op een iteratief onderzoeksproces en op **macro-recall en recall per klasse**, omdat de dataset sterk ongebalanceerd is.
+Dit project onderzoekt hoe verschillende CNN-keuzes de classificatie van ECG-hartslagen uit de MIT-BIH Arrhythmia Dataset beïnvloeden. De nadruk ligt op een iteratief onderzoeksproces en op macro-recall en recall per klasse, omdat de dataset sterk ongebalanceerd is.
 
 ## Onderzochte experimenten
 
@@ -58,8 +58,11 @@ uv run python main.py --experiment weighted_2d
 # Parallel model
 uv run python main.py --experiment parallel
 
-# Ray Tune (20 configuraties, maximaal 10 epochs per trial)
-uv run python main.py --experiment tune --epochs 10 --num-samples 20
+# Een vastgelegde standaardconfiguratie eenmalig op de testset evalueren
+uv run python main.py --experiment parallel --test-evaluation
+
+# Ray Tune (10 configuraties, maximaal 10 epochs per trial)
+uv run python main.py --experiment tune --epochs 10 --num-samples 10
 
 # Train/evalueer beste tuningconfiguratie op de officiële testset
 uv run python main.py --experiment final --epochs 10
@@ -68,9 +71,11 @@ uv run python main.py --experiment final --epochs 10
 De data worden verdeeld in een trainingsset, een gestratificeerde
 validatieset en een aparte testset. De standaardexperimenten trainen op de
 trainingsset en rapporteren hun metrics op de validatieset. Ray Tune gebruikt
-dezelfde train-validatieverdeling voor hyperparameterselectie. Alleen het
-`final`-experiment evalueert de vooraf geselecteerde configuratie op de
-officiële testset.
+dezelfde train-validatieverdeling voor hyperparameterselectie. Normaal
+evalueert alleen het `final`-experiment de vooraf geselecteerde configuratie
+op de officiële testset. Met `--test-evaluation` kan een standaardexperiment
+dit expliciet eenmalig doen; deze optie is bedoeld voor de definitieve
+evaluatie en niet voor modelselectie.
 
 Alle experimenten worden maximaal 10 epochs uitgevoerd en één keer getraind.
 De standaardexperimenten gebruiken early stopping met een patience van 3.
@@ -117,7 +122,9 @@ Experimenten schrijven resultaten weg naar:
 results/results.csv
 results/<experiment>_summary.csv
 results/ray_tuning_results.csv
-figures/<experiment>_mean_confusion_matrix.png
+results/ray_tuning_summary.csv
+figures/<experiment>_confusion_matrix.png
+figures/ray_tuning_top_trials.png
 logs/<experiment>/run_<n>/
 ```
 
