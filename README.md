@@ -25,7 +25,7 @@ De meegeleverde `heart_big_train.parq` wordt met een vaste seed **stratified** o
 
 Dit voorkomt dat de testset invloed heeft op hyperparameterselectie.
 
-> Let op: uit alleen deze lokale parquetbestanden/code kan niet worden vastgesteld of de oorspronkelijke train/test-splitsing patiëntonafhankelijk is. Dat moet uit de datasetdocumentatie worden geverifieerd en als beperking in het verslag worden beschreven als dit niet aantoonbaar is.
+> Let op: uit alleen deze lokale parquetbestanden/code kan niet worden vastgesteld of de oorspronkelijke train/test-splitsing patiëntonafhankelijk is. Dat moet uit de datasetdocumentatie worden geverifieerd. Dit is ook in het verslag beschreven.
 
 ## Installatie
 
@@ -74,7 +74,7 @@ trainingsset en rapporteren hun metrics op de validatieset. Ray Tune gebruikt
 dezelfde train-validatieverdeling voor hyperparameterselectie. Normaal
 evalueert alleen het `final`-experiment de vooraf geselecteerde configuratie
 op de officiële testset. Met `--test-evaluation` kan een standaardexperiment
-dit expliciet eenmalig doen; deze optie is bedoeld voor de definitieve
+dit expliciet eenmalig doen, deze optie is bedoeld voor de definitieve
 evaluatie en niet voor modelselectie.
 
 Alle experimenten worden maximaal 10 epochs uitgevoerd en één keer getraind.
