@@ -11,6 +11,5 @@ __pycache__
 **/mlruns
 *.db
 .notebookcache
-**/results
 **/ray_results
 
