@@ -139,7 +139,6 @@ def run_standard_experiment(args: Namespace) -> None:
         ),
         class_weights=weighted,
         parallel=parallel,
-        runs=args.runs,
         epochs=args.epochs,
         learning_rate=args.learning_rate,
         weight_decay=args.weight_decay,
@@ -230,7 +229,6 @@ def run_final(args: Namespace) -> None:
         loss_fn=torch.nn.CrossEntropyLoss(weight=weights),
         class_weights=True,
         parallel=True,
-        runs=args.runs,
         epochs=args.epochs,
         learning_rate=float(best["config/learning_rate"]),
         weight_decay=float(best["config/weight_decay"]),
@@ -261,8 +259,7 @@ def parse_args() -> Namespace:
     )
 
     # Algemene instellingen.
-    parser.add_argument("--epochs", type=int, default=5)
-    parser.add_argument("--runs", type=int, default=3)
+    parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--weight-decay", type=float, default=0.0)

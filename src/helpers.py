@@ -26,119 +26,98 @@ def run_experiment(
     loss_fn: Callable[..., torch.Tensor],
     class_weights: bool = False,
     parallel: bool = False,
-    runs: int = 3,
-    epochs: int = 5,
+    epochs: int = 15,
     learning_rate: float = 0.001,
     weight_decay: float = 0.0,
     filename: str | Path = "results/results.csv",
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Train en test een experiment meerdere keren."""
+    """Train en test één experiment één keer."""
 
-    resultaten = []
-    confusion_matrices = []
+    run = 1
+    set_seed(seed)
+    print(f"\n{experiment_name} - run {run} (seed={seed})")
 
-    for run in range(1, runs + 1):
-        run_seed = seed + run - 1
-        set_seed(run_seed)
+    model = model_function()
+    settings = TrainerSettings(
+        epochs=epochs,
+        metrics=[Accuracy()],
+        logdir=f"logs/{safe_name(experiment_name)}/run_{run}",
+        train_steps=len(trainstreamer),
+        valid_steps=len(validstreamer),
+        reporttypes=[ReportTypes.TENSORBOARD],
+        optimizer_kwargs={
+            "lr": learning_rate,
+            "weight_decay": weight_decay,
+        },
+        earlystop_kwargs={
+            "save": False,
+            "verbose": True,
+            "patience": 3,
+        },
+    )
 
-        print(f"\n{experiment_name} - run {run} (seed={run_seed})")
+    trainer = Trainer(
+        model=model,
+        settings=settings,
+        loss_fn=loss_fn,
+        optimizer=torch.optim.Adam,
+        traindataloader=trainstreamer.stream(),
+        validdataloader=validstreamer.stream(),
+        scheduler=torch.optim.lr_scheduler.ReduceLROnPlateau,
+    )
 
-        model = model_function()
+    start = time.perf_counter()
+    trainer.loop()
+    training_time = time.perf_counter() - start
 
-        # Instellingen voor het trainen van het model.
-        settings = TrainerSettings(
-            epochs=epochs,
-            metrics=[
-                Accuracy(),
-            ],
-            logdir=f"logs/{safe_name(experiment_name)}/run_{run}",
-            train_steps=len(trainstreamer),
-            valid_steps=len(validstreamer),
-            reporttypes=[ReportTypes.TENSORBOARD],
-            optimizer_kwargs={
-                "lr": learning_rate,
-                "weight_decay": weight_decay,
-            },
-            earlystop_kwargs=None,
-        )
+    y_true, y_pred = predict(model, teststreamer)
+    recalls = recall_score(
+        y_true,
+        y_pred,
+        labels=range(5),
+        average=None,
+        zero_division=0,
+    )
+    accuracy = accuracy_score(y_true, y_pred)
+    macro_recall = recalls.mean()
 
-        trainer = Trainer(
-            model=model,
-            settings=settings,
-            loss_fn=loss_fn,
-            optimizer=torch.optim.Adam,
-            traindataloader=trainstreamer.stream(),
-            validdataloader=validstreamer.stream(),
-            scheduler=torch.optim.lr_scheduler.ReduceLROnPlateau,
-        )
+    result = {
+        "Experiment": experiment_name,
+        "Run": run,
+        "Seed": seed,
+        "Class Weights": class_weights,
+        "Parallel": parallel,
+        "Epochs": epochs,
+        "Learning Rate": learning_rate,
+        "Weight Decay": weight_decay,
+        "Accuracy": accuracy,
+        "Macro Recall": macro_recall,
+        "Training Time Seconds": training_time,
+    }
+    for label, recall in zip(CLASS_LABELS, recalls):
+        result[f"Recall_{label}"] = recall
 
-        # Trainingstijd meten.
-        start = time.perf_counter()
-        trainer.loop()
-        training_time = time.perf_counter() - start
-
-        # Model testen.
-        y_true, y_pred = predict(model, teststreamer)
-
-        recalls = recall_score(
+    save_result(result, filename)
+    plot_confusion_matrix(
+        [confusion_matrix(
             y_true,
             y_pred,
             labels=range(5),
-            average=None,
-            zero_division=0,
-        )
+            normalize="true",
+        )],
+        experiment_name,
+    )
 
-        accuracy = accuracy_score(y_true, y_pred)
-        macro_recall = recalls.mean()
+    print(f"Accuracy: {accuracy:.3f}")
+    print(f"Macro-recall: {macro_recall:.3f}")
+    print(f"Recall: {recalls.round(3)}")
+    print(f"Trainingstijd: {training_time:.1f} seconden")
 
-        # Confusion matrix opslaan voor het gemiddelde over alle runs.
-        confusion_matrices.append(
-            confusion_matrix(
-                y_true,
-                y_pred,
-                labels=range(5),
-                normalize="true",
-            )
-        )
-
-        # Resultaten van deze run.
-        result = {
-            "Experiment": experiment_name,
-            "Run": run,
-            "Seed": run_seed,
-            "Class Weights": class_weights,
-            "Parallel": parallel,
-            "Epochs": epochs,
-            "Learning Rate": learning_rate,
-            "Weight Decay": weight_decay,
-            "Accuracy": accuracy,
-            "Macro Recall": macro_recall,
-            "Training Time Seconds": training_time,
-        }
-
-        # Recall per ECG-klasse toevoegen.
-        for label, recall in zip(CLASS_LABELS, recalls):
-            result[f"Recall_{label}"] = recall
-
-        resultaten.append(result)
-        save_result(result, filename)
-
-        print(f"Accuracy: {accuracy:.3f}")
-        print(f"Macro-recall: {macro_recall:.3f}")
-        print(f"Recall: {recalls.round(3)}")
-        print(f"Trainingstijd: {training_time:.1f} seconden")
-
-    # Gemiddelde confusion matrix maken.
-    plot_confusion_matrix(confusion_matrices, experiment_name)
-
-    # Gemiddelde resultaten opslaan.
-    summary = save_summary(resultaten, experiment_name, Path(filename).parent)
-
-    print("\nGemiddelde resultaten:")
+    summary = save_summary([result], experiment_name, Path(filename).parent)
+    print("\nResultaat:")
     print(summary.to_string(index=False))
-
-    return pd.DataFrame(resultaten)
+    return pd.DataFrame([result])
 
 
 def predict(
@@ -194,7 +173,7 @@ def save_summary(
     experiment_name: str,
     output_dir: Path,
 ) -> pd.DataFrame:
-    """Slaat gemiddelde en standaardafwijking van de runs op."""
+    """Slaat de resultaten van één experiment op."""
 
     df = pd.DataFrame(resultaten)
 
@@ -210,12 +189,9 @@ def save_summary(
         "Runs": len(df),
     }
 
-    # Gemiddelde en standaardafwijking berekenen.
+    # De samenvatting bevat de ene uitgevoerde meting.
     for kolom in kolommen:
         summary[f"{kolom} Mean"] = df[kolom].mean()
-        summary[f"{kolom} Std"] = (
-            df[kolom].std() if len(df) > 1 else 0.0
-        )
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -233,7 +209,7 @@ def plot_confusion_matrix(
     confusion_matrices: list[np.ndarray],
     experiment_name: str,
 ) -> None:
-    """Maakt de gemiddelde confusion matrix van alle runs."""
+    """Maakt de confusion matrix van het experiment."""
 
     mean_cm = np.mean(confusion_matrices, axis=0)
 

@@ -58,19 +58,18 @@ uv run python main.py --experiment weighted_2d
 # Parallel model
 uv run python main.py --experiment parallel
 
-# Ray Tune (standaard 20 configuraties, 10 epochs per trial aanbevolen)
-uv run python main.py --experiment tune --epochs 10 --num-samples 20
+# Ray Tune (20 configuraties, maximaal 15 epochs per trial)
+uv run python main.py --experiment tune --epochs 15 --num-samples 20
 
 # Train/evalueer beste tuningconfiguratie op de officiële testset
-uv run python main.py --experiment final --epochs 15 --runs 3
+uv run python main.py --experiment final --epochs 15
 ```
 
 Instellingen kunnen via flags worden aangepast:
 
 ```bash
 uv run python main.py --experiment parallel \
-  --epochs 5 \
-  --runs 3 \
+  --epochs 15 \
   --batch-size 32 \
   --learning-rate 0.001 \
   --filters 16 \
@@ -94,6 +93,9 @@ De tuning gebruikt:
 
 De eerste parallelle route blijft vast op **3×3**. Ray Tune selecteert op macro-recall van de validation set. ASHA wordt gebruikt om zwakke configuraties vroegtijdig te stoppen.
 
+De standaardexperimenten gebruiken early stopping met een patience van 3 epochs.
+Ray Tune gebruikt hiervoor ASHA met een grace period van 3 epochs.
+
 ## Resultaten
 
 Experimenten schrijven resultaten weg naar:
@@ -114,8 +116,6 @@ Per run worden onder andere opgeslagen:
 - recall per klasse N/S/V/F/Q;
 - trainingstijd;
 - relevante traininginstellingen.
-
-Bij meerdere runs wordt ook een CSV met gemiddelde en standaarddeviatie gemaakt.
 
 ## Projectstructuur
 
