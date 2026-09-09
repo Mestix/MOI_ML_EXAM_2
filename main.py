@@ -230,6 +230,7 @@ def run_final(args: Namespace) -> None:
         class_weights=True,
         parallel=True,
         epochs=args.epochs,
+        evaluate_on_test=True,
         learning_rate=float(best["config/learning_rate"]),
         weight_decay=float(best["config/weight_decay"]),
         filename=RESULTS_FILE,
@@ -259,7 +260,7 @@ def parse_args() -> Namespace:
     )
 
     # Algemene instellingen.
-    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--weight-decay", type=float, default=0.0)

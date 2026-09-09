@@ -58,18 +58,30 @@ uv run python main.py --experiment weighted_2d
 # Parallel model
 uv run python main.py --experiment parallel
 
-# Ray Tune (20 configuraties, maximaal 15 epochs per trial)
-uv run python main.py --experiment tune --epochs 15 --num-samples 20
+# Ray Tune (20 configuraties, maximaal 10 epochs per trial)
+uv run python main.py --experiment tune --epochs 10 --num-samples 20
 
 # Train/evalueer beste tuningconfiguratie op de officiële testset
-uv run python main.py --experiment final --epochs 15
+uv run python main.py --experiment final --epochs 10
 ```
+
+De data worden verdeeld in een trainingsset, een gestratificeerde
+validatieset en een aparte testset. De standaardexperimenten trainen op de
+trainingsset en rapporteren hun metrics op de validatieset. Ray Tune gebruikt
+dezelfde train-validatieverdeling voor hyperparameterselectie. Alleen het
+`final`-experiment evalueert de vooraf geselecteerde configuratie op de
+officiële testset.
+
+Alle experimenten worden maximaal 10 epochs uitgevoerd en één keer getraind.
+De standaardexperimenten gebruiken early stopping met een patience van 3.
+Hierdoor kan een experiment eerder stoppen wanneer de validatiemetriek drie
+epochs achter elkaar niet verbetert.
 
 Instellingen kunnen via flags worden aangepast:
 
 ```bash
 uv run python main.py --experiment parallel \
-  --epochs 15 \
+  --epochs 10 \
   --batch-size 32 \
   --learning-rate 0.001 \
   --filters 16 \
@@ -93,8 +105,9 @@ De tuning gebruikt:
 
 De eerste parallelle route blijft vast op **3×3**. Ray Tune selecteert op macro-recall van de validation set. ASHA wordt gebruikt om zwakke configuraties vroegtijdig te stoppen.
 
-De standaardexperimenten gebruiken early stopping met een patience van 3 epochs.
-Ray Tune gebruikt hiervoor ASHA met een grace period van 3 epochs.
+Ray Tune gebruikt ASHA met een grace period van 3 epochs en een reduction factor
+van 2. ASHA kan zwakke trials eerder beëindigen; de overige trials kunnen
+maximaal 10 epochs trainen.
 
 ## Resultaten
 
@@ -108,14 +121,15 @@ figures/<experiment>_mean_confusion_matrix.png
 logs/<experiment>/run_<n>/
 ```
 
-Per run worden onder andere opgeslagen:
+Per experiment worden onder andere opgeslagen:
 
 - seed;
 - accuracy;
 - macro-recall;
 - recall per klasse N/S/V/F/Q;
 - trainingstijd;
-- relevante traininginstellingen.
+- relevante traininginstellingen;
+- de gebruikte evaluatiesplit.
 
 ## Projectstructuur
 

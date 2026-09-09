@@ -21,7 +21,7 @@ def run_ray_tuning(
     valid_dataset: Dataset,
     class_weights: torch.Tensor,
     num_samples: int = 20,
-    max_epochs: int = 15,
+    max_epochs: int = 10,
     output_dir: str = "ray_results",
 ) -> pd.DataFrame:
     """Optimaliseer de parallelle 2D-CNN op basis van macro-recall op de validatieset."""

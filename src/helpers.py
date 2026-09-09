@@ -26,7 +26,8 @@ def run_experiment(
     loss_fn: Callable[..., torch.Tensor],
     class_weights: bool = False,
     parallel: bool = False,
-    epochs: int = 15,
+    epochs: int = 10,
+    evaluate_on_test: bool = False,
     learning_rate: float = 0.001,
     weight_decay: float = 0.0,
     filename: str | Path = "results/results.csv",
@@ -71,7 +72,10 @@ def run_experiment(
     trainer.loop()
     training_time = time.perf_counter() - start
 
-    y_true, y_pred = predict(model, teststreamer)
+    evaluation_streamer = (
+        teststreamer if evaluate_on_test else validstreamer
+    )
+    y_true, y_pred = predict(model, evaluation_streamer)
     recalls = recall_score(
         y_true,
         y_pred,
@@ -89,6 +93,7 @@ def run_experiment(
         "Class Weights": class_weights,
         "Parallel": parallel,
         "Epochs": epochs,
+        "Evaluation Split": "test" if evaluate_on_test else "validation",
         "Learning Rate": learning_rate,
         "Weight Decay": weight_decay,
         "Accuracy": accuracy,
@@ -155,13 +160,8 @@ def save_result(result: dict[str, Any], filename: str | Path) -> None:
     if filename.exists() and filename.stat().st_size > 0:
         df = pd.read_csv(filename)
 
-        # Oude versie van dezelfde run verwijderen.
-        df = df[
-            ~(
-                (df["Experiment"] == result["Experiment"])
-                & (df["Run"] == result["Run"])
-            )
-        ]
+        # Oude resultaten van dit experiment verwijderen.
+        df = df[df["Experiment"] != result["Experiment"]]
 
         nieuwe_rij = pd.concat([df, nieuwe_rij], ignore_index=True)
 
