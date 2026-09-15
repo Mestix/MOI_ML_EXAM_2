@@ -1,7 +1,13 @@
 import torch
 from torch import nn
 
-from src.config import ECG_FEATURES, MATRIX_SHAPE, NUM_CLASSES
+from src.config import (
+    ECG_FEATURES,
+    KERNEL_SIZE,
+    LARGE_KERNEL_SIZE,
+    MATRIX_SHAPE,
+    NUM_CLASSES,
+)
 
 
 class CNN1D(nn.Module):
@@ -11,7 +17,7 @@ class CNN1D(nn.Module):
         self,
         features: int = 1,
         num_classes: int = NUM_CLASSES,
-        kernel_size: int = 5,
+        kernel_size: int = KERNEL_SIZE,
         filters: int = 16,
         input_size: int = ECG_FEATURES,
     ) -> None:
@@ -24,6 +30,7 @@ class CNN1D(nn.Module):
                 kernel_size=kernel_size,
                 padding=kernel_size // 2,
             ),
+            nn.BatchNorm1d(filters),
             nn.ReLU(),
             nn.MaxPool1d(2),
         )
@@ -49,7 +56,7 @@ class CNN2D(nn.Module):
         self,
         features: int = 1,
         num_classes: int = NUM_CLASSES,
-        kernel_size: int = 3,
+        kernel_size: int = KERNEL_SIZE,
         filters: int = 16,
         matrixshape: tuple[int, int] = MATRIX_SHAPE,
     ) -> None:
@@ -63,6 +70,7 @@ class CNN2D(nn.Module):
                 kernel_size=kernel_size,
                 padding=kernel_size // 2,
             ),
+            nn.BatchNorm2d(filters),
             nn.ReLU(),
             nn.MaxPool2d(2),
         )
@@ -85,23 +93,20 @@ class CNN2D(nn.Module):
 
 
 class ParallelCNN2D(nn.Module):
-    """2D CNN met twee parallelle kernelgroottes."""
+    """2D CNN met een kleine en een grote parallelle kernelroute."""
 
     def __init__(
         self,
         num_classes: int = NUM_CLASSES,
         filters: int = 16,
         matrixshape: tuple[int, int] = MATRIX_SHAPE,
-        large_kernel: int = 5,
         dropout: float = 0.0,
+        large_kernel_size: int = LARGE_KERNEL_SIZE,
     ) -> None:
         super().__init__()
 
-        # Kleine kernel zoekt lokale patronen.
-        self.small_route = self._conv_block(filters, 3)
-
-        # Grote kernel kijkt naar een groter deel van het ECG.
-        self.large_route = self._conv_block(filters, large_kernel)
+        self.first_route = self._conv_block(filters, KERNEL_SIZE)
+        self.second_route = self._conv_block(filters, large_kernel_size)
 
         # Beide routes worden samengevoegd, dus 2 keer zoveel features.
         flatten_size = (
@@ -133,10 +138,10 @@ class ParallelCNN2D(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Beide routes verwerken dezelfde invoer.
-        small = self.small_route(x)
-        large = self.large_route(x)
+        first = self.first_route(x)
+        second = self.second_route(x)
 
         # Uitkomsten samenvoegen over de filters.
-        x = torch.cat([small, large], dim=1)
+        x = torch.cat([first, second], dim=1)
 
         return self.classifier(x)

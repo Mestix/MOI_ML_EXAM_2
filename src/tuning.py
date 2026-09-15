@@ -44,8 +44,8 @@ def run_ray_tuning(
             num_classes=NUM_CLASSES,
             filters=config["filters"],
             matrixshape=MATRIX_SHAPE,
-            large_kernel=config["large_kernel"],
             dropout=config["dropout"],
+            large_kernel_size=config["large_kernel"],
         )
 
         # Gebruik class weights zodat zeldzame klassen zwaarder meetellen in de loss.
@@ -119,10 +119,7 @@ def run_ray_tuning(
         "batch_size": tune.choice([16, 32, 64]),
         "weight_decay": tune.loguniform(1e-6, 1e-3),
         "dropout": tune.uniform(0.0, 0.4),
-
-        # De eerste parallelle route gebruikt vast een 3x3-kernel.
-        # Alleen de kernelgrootte van de tweede route wordt geoptimaliseerd.
-        "large_kernel": tune.choice([5, 7]),
+        "large_kernel": tune.choice([7, 9, 11]),
     }
 
     # ASHA stopt zwakke configuraties vroegtijdig,

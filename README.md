@@ -10,7 +10,7 @@ Dit project onderzoekt hoe verschillende CNN-keuzes de classificatie van ECG-har
 
 1. **1D-CNN versus 2D-CNN** – vergelijking van de oorspronkelijke tijdreeksrepresentatie met een 16×12-representatie.
 2. **Class weights** – inverse-frequency gewichten om zeldzame klassen zwaarder mee te laten tellen in de loss.
-3. **Parallelle 2D-CNN** – twee parallelle routes: een vaste 3×3-kernel en een tweede route met een grotere kernel.
+3. **Parallelle 2D-CNN** – een 5×5-route en een grotere route die standaard 7×7 gebruikt.
 4. **Ray Tune** – hyperparameteroptimalisatie van de parallelle CNN op validation macro-recall.
 
 De modellen staan in `src/networks.py`. Datasetlogica staat in `src/datasets.py`, de train/validation-split en class weights in `src/data_utils.py`, de experimenteerlogica in `src/helpers.py` en de Ray Tune-logica in `src/tuning.py`.
@@ -90,7 +90,7 @@ uv run python main.py --experiment parallel \
   --batch-size 32 \
   --learning-rate 0.001 \
   --filters 16 \
-  --large-kernel 5 \
+  --large-kernel 7 \
   --dropout 0.0 \
   --seed 42
 ```
@@ -106,9 +106,9 @@ De tuning gebruikt:
 | Batch size | `16, 32, 64` |
 | Weight decay | `1e-6` – `1e-3`, loguniform |
 | Dropout | `0.0` – `0.4`, uniform |
-| Tweede kernelroute | `5×5` of `7×7` |
+| Grote parallelle kernel | `7×7`, `9×9`, `11×11` |
 
-De eerste parallelle route blijft vast op **3×3**. Ray Tune selecteert op macro-recall van de validation set. ASHA wordt gebruikt om zwakke configuraties vroegtijdig te stoppen.
+De 1D- en 2D-CNN gebruiken een vaste kernelgrootte van **5**. In de parallelle CNN gebruikt de eerste route een vaste **5×5**-kernel en gebruikt de tweede route standaard een **7×7**-kernel. Ray Tune selecteert voor deze tweede route uit grotere kernels. ASHA wordt gebruikt om zwakke configuraties vroegtijdig te stoppen.
 
 Ray Tune gebruikt ASHA met een grace period van 3 epochs en een reduction factor
 van 2. ASHA kan zwakke trials eerder beëindigen; de overige trials kunnen

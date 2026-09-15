@@ -11,6 +11,7 @@ from torch.utils.data import Dataset, Subset
 from src.config import (
     DEFAULT_SEED,
     ECG_FEATURES,
+    LARGE_KERNEL_SIZE,
     MATRIX_SHAPE,
     NUM_CLASSES,
     RESULTS_FILE,
@@ -120,8 +121,8 @@ def run_standard_experiment(args: Namespace) -> None:
             num_classes=NUM_CLASSES,
             filters=args.filters,
             matrixshape=MATRIX_SHAPE,
-            large_kernel=args.large_kernel,
             dropout=args.dropout,
+            large_kernel_size=args.large_kernel,
         )
 
     else:
@@ -220,8 +221,8 @@ def run_final(args: Namespace) -> None:
             num_classes=NUM_CLASSES,
             filters=int(best["config/filters"]),
             matrixshape=MATRIX_SHAPE,
-            large_kernel=int(best["config/large_kernel"]),
             dropout=float(best["config/dropout"]),
+            large_kernel_size=int(best["config/large_kernel"]),
         ),
         experiment_name="parallel_hypertuned_final",
         trainstreamer=build_streamer(train, batch_size),
@@ -266,13 +267,12 @@ def parse_args() -> Namespace:
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--weight-decay", type=float, default=0.0)
     parser.add_argument("--filters", type=int, default=16)
+    parser.add_argument("--dropout", type=float, default=0.0)
     parser.add_argument(
         "--large-kernel",
         type=int,
-        choices=[5, 7],
-        default=5,
+        default=LARGE_KERNEL_SIZE,
     )
-    parser.add_argument("--dropout", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--num-samples", type=int, default=20)
     parser.add_argument(
