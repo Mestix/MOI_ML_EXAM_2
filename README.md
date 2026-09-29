@@ -25,8 +25,6 @@ De meegeleverde `heart_big_train.parq` wordt met een vaste seed **stratified** o
 
 Dit voorkomt dat de testset invloed heeft op hyperparameterselectie.
 
-> Let op: uit alleen deze lokale parquetbestanden/code kan niet worden vastgesteld of de oorspronkelijke train/test-splitsing patiëntonafhankelijk is. Dat moet uit de datasetdocumentatie worden geverifieerd. Dit is ook in het verslag beschreven.
-
 ## Installatie
 
 Dit project gebruikt Python 3.12 en `uv`.

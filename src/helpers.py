@@ -51,11 +51,11 @@ def run_experiment(
             "lr": learning_rate,
             "weight_decay": weight_decay,
         },
-        earlystop_kwargs={
-            "save": False,
-            "verbose": True,
-            "patience": 3,
-        },
+        # earlystop_kwargs={
+        #     "save": True,
+        #     "verbose": True,
+        #     "patience": 3,
+        # },
     )
 
     trainer = Trainer(
@@ -159,9 +159,13 @@ def save_result(result: dict[str, Any], filename: str | Path) -> None:
 
     if filename.exists() and filename.stat().st_size > 0:
         df = pd.read_csv(filename)
-
-        # Oude resultaten van dit experiment verwijderen.
-        df = df[df["Experiment"] != result["Experiment"]]
+        # Alleen een eerdere run met dezelfde seed vervangen.
+        df = df[
+            ~(
+                (df["Experiment"] == result["Experiment"])
+                & (df["Seed"] == result["Seed"])
+            )
+        ]
 
         nieuwe_rij = pd.concat([df, nieuwe_rij], ignore_index=True)
 
